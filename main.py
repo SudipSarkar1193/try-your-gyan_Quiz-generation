@@ -13,7 +13,7 @@ app = FastAPI()
 # Enable CORS for React
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5000","https://try-your-gyan-v2-1.onrender.com"],  
+    allow_origins=["http://127.0.0.1:5000","https://try-your-gyan-v2-1.onrender.com","https://try-your-gyan.vercel.app"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
