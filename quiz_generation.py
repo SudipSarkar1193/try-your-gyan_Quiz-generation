@@ -66,7 +66,8 @@ async def generate_quiz(request):
         loop = asyncio.get_event_loop()
         past_questions = await loop.run_in_executor(None, lambda: get_past_questions(request.user_id, normalized_topic))
         past_questions_str = "; ".join(past_questions) if past_questions else "None"
-        #logger.info(f"Past questions fetched: {past_questions_str}")
+        
+        logger.info(f"Past questions fetched: {past_questions}")
 
         # Dynamic prompt with randomization and history
         random_seed = random.randint(1, 1000)
