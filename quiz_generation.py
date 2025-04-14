@@ -1,16 +1,13 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.output_parsers import StructuredOutputParser, ResponseSchema
-
+from langchain_core.output_parsers import StructuredOutputParser, ResponseSchema
 import random
 import os
 from db import get_past_questions
 import json
 import asyncio
 import re
-
 import logging
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +26,7 @@ output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
 # Normalize topic to a canonical form
 def normalize_topic(raw_topic: str) -> str:
-    # normalize
+    # Remove common quiz generation phrases and normalize
     topic = raw_topic.lower().strip()
     phrases_to_remove = [
         r"generate\s+me\s+a\s+quiz\s+on",
@@ -45,7 +42,7 @@ def normalize_topic(raw_topic: str) -> str:
 # Quiz generation
 async def generate_quiz(request):
     logger.info(f"Starting generate_quiz with request: {request.dict()}")
-    print("in generate_quiz , request :", request.dict())  # debugging
+    print("in generate_quiz , request :", request.dict())  # Keep print for quick debugging
 
     # Normalize the topic
     normalized_topic = normalize_topic(request.topic)
@@ -99,7 +96,7 @@ async def generate_quiz(request):
         seed=random_seed,
         past=past_questions_str
     )
-    logger.info(f"Formatted prompt: {formatted_prompt}")  # Changed to log the string directly
+    logger.info(f"Formatted prompt: {formatted_prompt.messages[0].content}")
 
     # Generate quiz
     try:
