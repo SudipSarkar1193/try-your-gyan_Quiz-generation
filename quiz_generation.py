@@ -117,7 +117,7 @@ async def generate_quiz(request):
         #logger.info(f"LLM response raw content: {response.content}")
         parsed_response = output_parser.parse(response.content)
 
-        logger.info(f"Parsed response: {parsed_response}")
+        #logger.info(f"Parsed response: {parsed_response}")
         #print("parsed_response:\n", parsed_response)
 
         if parsed_response["ok"]:
