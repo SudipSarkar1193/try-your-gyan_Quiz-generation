@@ -32,11 +32,15 @@ async def quiz_endpoint(request: QuizRequest):
         
         result = await generate_quiz(request)
         return result
+    
     except HTTPException as e:
         logger.error(f"Validation error: {str(e.detail)}")
         raise
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+    
+    
 
 # Run with: uvicorn main:app --host 0.0.0.0 --port 8000
