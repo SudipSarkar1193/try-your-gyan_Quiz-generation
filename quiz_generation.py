@@ -40,19 +40,19 @@ def normalize_topic(raw_topic: str) -> str:
     ]
     for phrase in phrases_to_remove:
         topic = re.sub(phrase, "", topic)
-    logger.info(f"Normalized topic from '{raw_topic}' to '{topic}'")
+    #logger.info(f"Normalized topic from '{raw_topic}' to '{topic}'")
     return topic.strip() or "unknown"
 
 # Quiz generation
 async def generate_quiz(request):
     try:
-        logger.info(f"Starting generate_quiz with request: {request.dict()}")
+        #logger.info(f"Starting generate_quiz with request: {request.dict()}")
         print("in generate_quiz , request :", request.dict())  # Keep print for quick debugging
 
         # Normalize the topic
         normalized_topic = normalize_topic(request.topic)
-        logger.info(f"Normalized topic: {normalized_topic}")
-        print("in generate_quiz , normalized_topic :", normalized_topic)
+        #logger.info(f"Normalized topic: {normalized_topic}")
+        #print("in generate_quiz , normalized_topic :", normalized_topic)
 
         # Initialize Gemini
         llm = ChatGoogleGenerativeAI(
@@ -60,13 +60,13 @@ async def generate_quiz(request):
             google_api_key=os.getenv("API_KEY"),
             temperature=0.9,
         )
-        logger.info("Gemini LLM initialized")
+        #logger.info("Gemini LLM initialized")
 
         # Fetch past questions using normalized topic
         loop = asyncio.get_event_loop()
         past_questions = await loop.run_in_executor(None, lambda: get_past_questions(request.user_id, normalized_topic))
         past_questions_str = "; ".join(past_questions) if past_questions else "None"
-        logger.info(f"Past questions fetched: {past_questions_str}")
+        #logger.info(f"Past questions fetched: {past_questions_str}")
 
         # Dynamic prompt with randomization and history
         random_seed = random.randint(1, 1000)
@@ -107,19 +107,21 @@ async def generate_quiz(request):
         #logger.info(f"Formatted prompt: {formatted_prompt.messages[0].content}")  -not reaching the except block if i directly do this 
 
         
-        logger.info(f"Formatted prompt: {formatted_prompt}")
+        #logger.info(f"Formatted prompt: {formatted_prompt}")
 
         # Generate quiz
-        logger.info("Invoking LLM with prompt")
+        #logger.info("Invoking LLM with prompt")
         response = await llm.ainvoke(formatted_prompt)
-        logger.info(f"LLM response raw content: {response.content}")
+
+        #logger.info(f"LLM response raw content: {response.content}")
         parsed_response = output_parser.parse(response.content)
-        logger.info(f"Parsed response: {parsed_response}")
-        print("parsed_response:\n", parsed_response)
+
+       # logger.info(f"Parsed response: {parsed_response}")
+        #print("parsed_response:\n", parsed_response)
 
         if parsed_response["ok"]:
             if isinstance(parsed_response["data"][0], dict):
-                logger.info("Returning valid quiz response")
+                #logger.info("Returning valid quiz response")
                 return parsed_response
             elif isinstance(parsed_response["data"][0], str):
                 logger.error(f"Error in response data: {parsed_response['data'][0]}")

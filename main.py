@@ -1,4 +1,4 @@
-# main.py
+
 from fastapi import FastAPI, HTTPException
 from quiz_generation import generate_quiz
 from pydantic import BaseModel
@@ -17,12 +17,12 @@ class QuizRequest(BaseModel):
 
 @app.post("/generate-quiz")
 async def quiz_endpoint(request: QuizRequest):
-    logger.info("HIT THE SERVER")
-    logger.info(f"Received request: {request.model_dump()}")
+    #logger.info("HIT THE SERVER")
+    #logger.info(f"Received request: {request.model_dump()}")
     try:
         # Normalize difficulty to lowercase
         normalized_difficulty = request.difficulty.lower()
-        logger.info(f"Normalized difficulty: {normalized_difficulty}")
+        #logger.info(f"Normalized difficulty: {normalized_difficulty}")
         if not (5 <= request.num_questions <= 20):
             logger.error(f"Validation failed: Number of questions {request.num_questions} out of range (5-20)")
             raise HTTPException(status_code=400, detail="Number of questions must be between 5 and 20")

@@ -1,10 +1,16 @@
-# db.py
+
 import psycopg2
 import json
 import os
 import dotenv
 from dotenv import load_dotenv
+import logging
 
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load .env
 load_dotenv()
@@ -56,7 +62,10 @@ def get_past_questions(user_id: int, topic: str) -> list:
         past_questions = [row[0] for row in cur.fetchall()]
         cur.close()
         conn.close()
-        print("past_questions :\n",past_questions)
+        # print("past_questions :\n",past_questions)
         return past_questions
     except Exception as e:
-        print(f"Failed to fetch past questions for the user : {user_id} and topic :{topic} . ERROR : {e}")
+        logger.error(f"Failed to fetch past questions for the user : {user_id} and topic :{topic} . ERROR : {e}")
+
+        raise Exception(f"Failed to fetch past questions for the user : {user_id} and topic :{topic} . ERROR : {e}")
+        
