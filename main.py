@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 class QuizRequest(BaseModel):
-    user_id: str
+    user_id: int
     topic: str
     num_questions: int
     difficulty: str

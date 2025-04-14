@@ -39,9 +39,9 @@ def get_db_connection():
     
 
 # Fetch past questions for a user and topic
-def get_past_questions(user_id: str, topic: str) -> list:
+def get_past_questions(user_id: int, topic: str) -> list:
     try:
-        user_id = int(user_id)
+       
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
