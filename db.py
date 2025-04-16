@@ -46,7 +46,12 @@ def get_db_connection():
 
 # Fetch past questions for a user and topic
 def get_past_questions(user_id: int, topic: str) -> list:
+    user_id = str(user_id)
+    print("In get_past_questions : ")
+    print("user_id :",user_id)
+    print("type",type(user_id))
     try:
+        logger.info(f"user id :{user_id}")
        
         conn = get_db_connection()
         cur = conn.cursor()

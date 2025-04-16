@@ -29,8 +29,12 @@ response_schemas = [
 output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
 # Normalize topic to a canonical form
-def normalize_topic(raw_topic: str) -> str:
-    # Remove common quiz generation phrases and normalize
+def normalize_topic(raw_topic: str) -> tuple[str, str]:
+    """
+    Normalize a raw topic string into a clean version for DB search
+    and a formatted version with underscores for other uses.
+    Returns a tuple: (clean_name, underscored_version)
+    """
     topic = raw_topic.lower().strip()
     phrases_to_remove = [
         r"generate\s+me\s+a\s+quiz\s+on",
@@ -40,8 +44,12 @@ def normalize_topic(raw_topic: str) -> str:
     ]
     for phrase in phrases_to_remove:
         topic = re.sub(phrase, "", topic)
-    #logger.info(f"Normalized topic from '{raw_topic}' to '{topic}'")
-    return topic.strip() or "unknown"
+
+    clean_name = topic.strip().title() or "Unknown"
+    
+
+    return clean_name
+
 
 # Quiz generation
 async def generate_quiz(request):
@@ -50,7 +58,7 @@ async def generate_quiz(request):
         print("in generate_quiz , request :", request.dict())  # Keep print for quick debugging
 
         # Normalize the topic
-        normalized_topic = normalize_topic(request.topic)
+        clean_name = normalize_topic(request.topic)
         #logger.info(f"Normalized topic: {normalized_topic}")
         #print("in generate_quiz , normalized_topic :", normalized_topic)
 
@@ -64,7 +72,7 @@ async def generate_quiz(request):
 
         # Fetch past questions using normalized topic
         loop = asyncio.get_event_loop()
-        past_questions = await loop.run_in_executor(None, lambda: get_past_questions(request.user_id, normalized_topic))
+        past_questions = await loop.run_in_executor(None, lambda: get_past_questions(request.user_id, clean_name))
         past_questions_str = "; ".join(past_questions) if past_questions else "None"
         
         logger.info(f"Past questions fetched: {past_questions}")
@@ -95,7 +103,7 @@ async def generate_quiz(request):
             """)
         ])
         formatted_prompt = prompt.format(
-            topic=normalized_topic,
+            topic=clean_name,
             num=request.num_questions,
             diff=request.difficulty,
             format=output_parser.get_format_instructions(),
