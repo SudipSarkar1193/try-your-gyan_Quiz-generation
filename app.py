@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"status": "healthy","Message":"Welcome to try-your-gyan"}), 200
+
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health():
