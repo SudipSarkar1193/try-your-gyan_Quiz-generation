@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"}), 200
+
 @app.route('/generate-quiz', methods=['POST'])
 def quiz_endpoint():
     try:
