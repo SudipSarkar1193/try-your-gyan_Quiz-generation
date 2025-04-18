@@ -1,7 +1,6 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StructuredOutputParser
-from langchain_core.prompts import ResponseSchema
+from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 import random
 import os
 from db import get_past_questions
