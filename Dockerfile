@@ -16,7 +16,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download any large dependencies (e.g., model weights) if applicable
-# Adjust this based on quiz_generation requirements
 RUN python -c "from quiz_generation import generate_quiz; generate_quiz({'user_id': 0, 'topic': 'test', 'num_questions': 5, 'difficulty': 'easy'})" || true
 
 # Copy project code
@@ -25,9 +24,7 @@ COPY . .
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PORT=8000 \
-    UVICORN_WORKERS=1 
-    
-    # Single worker to minimize memory usage
+    UVICORN_WORKERS=1
 
 # Expose port
 EXPOSE 8000
@@ -36,5 +33,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run FastAPI with uvicorn, using valid options
+# Run FastAPI with uvicorn
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT --workers $UVICORN_WORKERS --timeout-keep-alive 65"]
