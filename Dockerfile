@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements.txt and install dependencies
 COPY requirements.txt .
+# Cache-busting step
+RUN echo "Build at $(date)" > build.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download any large dependencies (e.g., model weights) if applicable
