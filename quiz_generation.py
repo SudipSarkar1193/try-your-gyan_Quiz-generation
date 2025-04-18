@@ -1,17 +1,13 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.output_parsers import StructuredOutputParser, ResponseSchema
-
+from langchain_core.output_parsers import StructuredOutputParser
+from langchain_core.prompts import ResponseSchema
 import random
 import os
 from db import get_past_questions
 import json
-import asyncio
 import re
-
 import logging
-
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,13 +24,8 @@ response_schemas = [
 ]
 output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
-# Normalize topic to a canonical form
-def normalize_topic(raw_topic: str) -> tuple[str, str]:
-    """
-    Normalize a raw topic string into a clean version for DB search
-    and a formatted version with underscores for other uses.
-    Returns a tuple: (clean_name, underscored_version)
-    """
+def normalize_topic(raw_topic: str) -> str:
+    """Normalize a raw topic string into a clean version"""
     topic = raw_topic.lower().strip()
     phrases_to_remove = [
         r"generate\s+me\s+a\s+quiz\s+on",
@@ -44,37 +35,33 @@ def normalize_topic(raw_topic: str) -> tuple[str, str]:
     ]
     for phrase in phrases_to_remove:
         topic = re.sub(phrase, "", topic)
+    return topic.strip().title() or "Unknown"
 
-    clean_name = topic.strip().title() or "Unknown"
-    
-
-    return clean_name
-
-
-# Quiz generation
-async def generate_quiz(request):
+def generate_quiz(request_data):
     try:
-        #logger.info(f"Starting generate_quiz with request: {request.dict()}")
-        print("in generate_quiz , request :", request.dict())  # Keep print for quick debugging
-
+        logger.info(f"Starting generate_quiz with request: {request_data}")
+        
+        # Extract parameters from request
+        user_id = request_data.get('user_id')
+        topic = request_data.get('topic')
+        num_questions = request_data.get('num_questions')
+        difficulty = request_data.get('difficulty')
+        
         # Normalize the topic
-        clean_name = normalize_topic(request.topic)
-        #logger.info(f"Normalized topic: {normalized_topic}")
-        #print("in generate_quiz , normalized_topic :", normalized_topic)
+        clean_name = normalize_topic(topic)
+        logger.info(f"Normalized topic: {clean_name}")
 
-        # Initialize Gemini
+        # Initialize Gemini (synchronous version)
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
             google_api_key=os.getenv("API_KEY"),
             temperature=0.9,
         )
-        #logger.info("Gemini LLM initialized")
+        logger.info("Gemini LLM initialized")
 
-        # Fetch past questions using normalized topic
-        loop = asyncio.get_event_loop()
-        past_questions = await loop.run_in_executor(None, lambda: get_past_questions(request.user_id, clean_name))
+        # Fetch past questions (synchronous version)
+        past_questions = get_past_questions(user_id, clean_name)
         past_questions_str = "; ".join(past_questions) if past_questions else "None"
-        
         logger.info(f"Past questions fetched: {past_questions}")
 
         # Dynamic prompt with randomization and history
@@ -104,33 +91,24 @@ async def generate_quiz(request):
         ])
         formatted_prompt = prompt.format(
             topic=clean_name,
-            num=request.num_questions,
-            diff=request.difficulty,
+            num=num_questions,
+            diff=difficulty,
             format=output_parser.get_format_instructions(),
             seed=random_seed,
             past=past_questions_str
         )
         
-        #fp_content = formatted_prompt.messages[0].content 
-        #logger.info(f"Formatted prompt: {fp_content}") ⭐Note : if i do this then ONLyY error is reaching the except block
-        #logger.info(f"Formatted prompt: {formatted_prompt.messages[0].content}")  -not reaching the except block if i directly do this 
+        logger.info("Invoking LLM with prompt")
+        # Synchronous invocation
+        response = llm.invoke(formatted_prompt)
+        logger.info(f"LLM response raw content: {response.content}")
 
-        
-        #logger.info(f"Formatted prompt: {formatted_prompt}")
-
-        # Generate quiz
-        #logger.info("Invoking LLM with prompt")
-        response = await llm.ainvoke(formatted_prompt)
-
-        #logger.info(f"LLM response raw content: {response.content}")
         parsed_response = output_parser.parse(response.content)
-
-        #logger.info(f"Parsed response: {parsed_response}")
-        #print("parsed_response:\n", parsed_response)
+        logger.info(f"Parsed response: {parsed_response}")
 
         if parsed_response["ok"]:
             if isinstance(parsed_response["data"][0], dict):
-                #logger.info("Returning valid quiz response")
+                logger.info("Returning valid quiz response")
                 return parsed_response
             elif isinstance(parsed_response["data"][0], str):
                 logger.error(f"Error in response data: {parsed_response['data'][0]}")
@@ -140,9 +118,8 @@ async def generate_quiz(request):
                 raise Exception("Invalid response format")
         else:
             logger.error("Quiz generation failed !!!!")
-            #raise Exception("Quiz generation failed")
             return parsed_response
+            
     except Exception as e:
         logger.error(f"Exception in generate_quiz 😓: {str(e)}")
-        #return [{"ok": False}, [f"Error generating quiz: {str(e)}"]]
-        raise Exception(f"Exception in generate_quiz: {str(e)}")
+        return {"ok": False, "data": [f"Error generating quiz: {str(e)}"]}
