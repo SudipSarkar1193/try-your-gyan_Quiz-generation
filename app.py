@@ -3,6 +3,7 @@ import os
 import asyncio
 from flask import Flask, request, jsonify
 from quiz_generation import generate_quiz
+import psutil
 
 # Setup logging
 logging.basicConfig(
@@ -55,7 +56,7 @@ def quiz_endpoint():
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
     
-    
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
     logger.info(f"Starting Flask server on port {port}")
