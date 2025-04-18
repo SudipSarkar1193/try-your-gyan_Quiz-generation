@@ -33,15 +33,14 @@ def quiz_endpoint():
             logger.error(f"Invalid difficulty: {difficulty}")
             return jsonify({"error": "Difficulty must be easy, medium, or hard"}), 400
         
-        # Run async function in sync context
-        result = asyncio.run(generate_quiz(data))
+        # Call generate_quiz directly 
+        result = generate_quiz(data)
         logger.info(f"Returning quiz: {len(result.get('data', []))} questions")
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
-
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
