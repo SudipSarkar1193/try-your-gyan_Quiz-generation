@@ -19,7 +19,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 app = FastAPI()
 
-# Health endpoint :=> resource monitoring
+# Health endpoint => RESOURCE MONITORING
 @app.get("/health")
 async def health():
     memory = psutil.virtual_memory()
@@ -51,16 +51,23 @@ async def quiz_endpoint(request: QuizRequest):
             logger.error(f"Invalid difficulty: {request.difficulty}")
             raise HTTPException(status_code=400, detail=f"Difficulty must be easy, medium, or hard (got {request.difficulty})")
         
-        # Log resource usage before and after quiz generation
+        # Log resource usage 
+        # 6before and after quiz generation and enforce timeout
         process = psutil.Process()
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Starting quiz generation, memory: {process.memory_info().rss / 1024 / 1024} MB")
-        result = await generate_quiz(request)
+        
+        # Run generate_quiz with a timeout (e.g., 300 seconds)
+        result = await asyncio.wait_for(generate_quiz(request), timeout=300)
+        
         duration = asyncio.get_event_loop().time() - start_time
         logger.debug(f"Quiz generation completed in {duration:.2f}s, memory: {process.memory_info().rss / 1024 / 1024} MB")
         
         logger.info(f"Returning quiz: {len(result.get('data', []))} questions")
         return result
+    except asyncio.TimeoutError:
+        logger.error("Quiz generation timed out after 300 seconds")
+        raise HTTPException(status_code=504, detail="Quiz generation took too long")
     except HTTPException as e:
         logger.error(f"Validation error: {str(e.detail)}")
         raise
@@ -77,6 +84,5 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", 8000)),
         workers=1,  # Match Dockerfile
         log_level="debug",
-        timeout_keep_alive=65,
-        timeout=600
+        timeout_keep_alive=65
     )
