@@ -22,6 +22,10 @@ def health():
 @app.route('/generate-quiz', methods=['POST'])
 def quiz_endpoint():
     try:
+        process = psutil.Process()
+        mem_info = process.memory_info()
+        logger.info(f"Memory usage before quiz generation: {mem_info.rss / 1024 / 1024:.2f} MB")
+
         data = request.get_json()
         logger.info(f"Received quiz request: {data}")
 
@@ -39,15 +43,19 @@ def quiz_endpoint():
             logger.error(f"Invalid difficulty: {difficulty}")
             return jsonify({"error": "Difficulty must be easy, medium, or hard"}), 400
         
-        # Call generate_quiz directly 
         result = generate_quiz(data)
         logger.info(f"Returning quiz: {len(result.get('data', []))} questions")
+        
+        mem_info = process.memory_info()
+        logger.info(f"Memory usage after quiz generation: {mem_info.rss / 1024 / 1024:.2f} MB")
+        
         return jsonify(result)
     
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
-
+    
+    
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
     logger.info(f"Starting Flask server on port {port}")
